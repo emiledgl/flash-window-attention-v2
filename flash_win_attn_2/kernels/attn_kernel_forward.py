@@ -67,7 +67,6 @@ def _fwd_kernel(
     start_m = tl.program_id(0)
     off_bw = tl.program_id(1)
     off_h = tl.program_id(2)
-    LOG2E: tl.constexpr = tl.log2(tl.exp(1.0))  # log2(e)
     MAX_LOG: tl.constexpr = tl.log(100.0)
 
     # initialize offsets
@@ -109,10 +108,10 @@ def _fwd_kernel(
     scale_ptr = Scale + off_h if SCALE_TYPE == "tensor" else Scale
     log_scale = tl.load(scale_ptr).to(tl.float32)
     if SCALE_TYPE == "tensor":
-        logit_scale = tl.minimum(log_scale, MAX_LOG).exp()
+        logit_scale = tl.exp(tl.minimum(log_scale, MAX_LOG))
     else:
         logit_scale = log_scale
-    qk_scale = logit_scale * LOG2E
+    qk_scale = logit_scale
     
     # load q: it will stay in SRAM throughout
     if EVEN_M & EVEN_N:
@@ -129,7 +128,7 @@ def _fwd_kernel(
             )
     norm_q = tl.sqrt(tl.sum(q.to(tl.float32) * q.to(tl.float32), axis=1, keep_dims=True) + 1e-12)
     q_n = q.to(tl.float32) / norm_q
-    q_n = (q_n * qk_scale).to(tl.float16)
+    q_n = (q_n * qk_scale).to(q.dtype)
     
     # Loop over k, v and update accumulator
     for start_n in range(0, seqlen_k, BLOCK_N):
@@ -155,7 +154,7 @@ def _fwd_kernel(
                 )
         norm_k = tl.sqrt(tl.sum(k.to(tl.float32) * k.to(tl.float32), axis=1, keep_dims=True) + 1e-12)
         k_n = k.to(tl.float32) / norm_k
-        k_n = k_n.to(tl.float16)
+        k_n = k_n.to(k.dtype)
 
         # Compute qk with attention masking
         qk = tl.zeros([BLOCK_M, BLOCK_N], dtype=tl.float32)
@@ -170,7 +169,6 @@ def _fwd_kernel(
                     mask=(offs_m[:, None] < seqlen_q) & ((start_n + offs_n)[None, :] < seqlen_k),
                     other=0.0,
                 ).to(tl.float32)
-            bias *= LOG2E
             qk += bias
         if HAS_MASK:
             if EVEN_M & EVEN_N:
@@ -188,8 +186,8 @@ def _fwd_kernel(
         
         # Compute scaling constant
         m_ij = tl.maximum(tl.max(qk, 1), m_i)
-        p = tl.math.exp2(qk - m_ij[:, None])
-        alpha = tl.math.exp2(m_i - m_ij)
+        p = tl.exp(qk - m_ij[:, None])
+        alpha = tl.exp(m_i - m_ij)
         
         # Scale and update accumulator
         acc_scale = lse_i * 0 + alpha  # Workaround for compiler bug
@@ -226,7 +224,7 @@ def _fwd_kernel(
     
     # write back l and m
     lse_ptrs = Lse + off_bw * stride_lse_bw + off_h * stride_lse_h + offs_m
-    tl.store(lse_ptrs, m_i + tl.math.log2(lse_i))
+    tl.store(lse_ptrs, m_i + tl.log(lse_i))
     
     # initialize pointers to output
     offs_d = tl.arange(0, BLOCK_HEADDIM)
@@ -256,7 +254,7 @@ def _flash_attn_forward(q, k, v, logit_scale, bias=None, mask=None, scale_type="
         _, _, seqlen_k, _ = k.shape
         assert k.shape == (batch_window_size, n_heads, seqlen_k, d)
         assert v.shape == (batch_window_size, n_heads, seqlen_k, d)
-        assert d <= 128
+        assert d in {16, 32, 64, 128}
         assert q.dtype == k.dtype == v.dtype
         assert q.dtype in [torch.float16, torch.bfloat16]
         assert q.is_cuda and k.is_cuda and v.is_cuda and logit_scale.is_cuda

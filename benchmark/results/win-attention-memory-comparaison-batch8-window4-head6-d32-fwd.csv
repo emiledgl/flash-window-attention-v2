@@ -1,0 +1,7 @@
+seq_len,classic fwd memory (MB),compile fwd memory (MB),flash fwd memory (MB),fwd memory reduction vs classic,fwd memory reduction vs compile
+64,47.41,51.96,47.41,1.00,1.10
+144,134.65,164.00,131.06,1.03,1.25
+256,245.27,326.46,227.27,1.08,1.44
+576,680.62,1067.29,572.12,1.19,1.87
+1024,1903.02,3091.77,1543.02,1.23,2.00
+1600,4480.84,7352.26,3580.41,1.25,2.05

@@ -125,8 +125,8 @@ def _bwd_kernel_one_col_block(
     offs_n = start_n * BLOCK_N + tl.arange(0, BLOCK_N)
     offs_m = tl.arange(0, BLOCK_M)
     offs_d = tl.arange(0, BLOCK_HEADDIM)
-    LOG2E: tl.constexpr = tl.log2(tl.exp(1.0))  # log2(e)
     MAX_LOG: tl.constexpr = tl.log(100.0)
+
     # initialize pointers to value-like data
     q_ptrs = Q + (offs_m[:, None] * stride_qm + offs_d[None, :])
     k_ptrs = K + (offs_n[:, None] * stride_kn + offs_d[None, :])
@@ -171,13 +171,13 @@ def _bwd_kernel_one_col_block(
     # Scale for softmax
     log_scale = tl.load(Scale).to(tl.float32)
     if SCALE_TYPE == "tensor":
-        logit_scale = tl.minimum(log_scale, MAX_LOG).exp()
+        logit_scale = tl.exp(tl.minimum(log_scale, MAX_LOG))
     else:
         logit_scale = log_scale
-    qk_scale = logit_scale * LOG2E
+    qk_scale = logit_scale
 
     # initialize dscale
-    dscale = tl.zeros([], tl.float32) if SCALE_TYPE == "tensor" else None
+    dscale = tl.zeros([], dtype=tl.float32) if SCALE_TYPE == "tensor" else None
 
     # loop over rows
     num_block_m = tl.cdiv(seqlen_q, BLOCK_M)
@@ -209,7 +209,7 @@ def _bwd_kernel_one_col_block(
         q_n = q.to(tl.float32) / norm_q
         
         # recompute p = softmax(qk, dim=-1).T
-        qk = tl.dot(q_n.to(tl.float16), tl.trans(k_n.to(tl.float16)))
+        qk = tl.dot(q_n.to(q.dtype), tl.trans(k_n.to(k.dtype)))
         qk_scaled = qk * qk_scale
 
         if HAS_BIAS:
@@ -221,7 +221,7 @@ def _bwd_kernel_one_col_block(
                     mask=(offs_m_curr[:, None] < seqlen_q) & (offs_n[None, :] < seqlen_k),
                     other=0.0,
                 ).to(tl.float32)
-            bias *= LOG2E
+            #bias *= LOG2E
             qk_scaled += bias
             
         if HAS_MASK:
@@ -244,7 +244,7 @@ def _bwd_kernel_one_col_block(
         
         # Compute softmax
         lse_i = tl.load(LSE + offs_m_curr, mask=offs_m_curr < seqlen_q, other=0.0)
-        p = tl.math.exp2(qk_scaled - lse_i[:, None])
+        p = tl.exp(qk_scaled - lse_i[:, None])
 
         # compute dv
         dv += tl.dot(tl.trans(p.to(do.dtype)), do)
@@ -254,28 +254,26 @@ def _bwd_kernel_one_col_block(
         
         # compute ds = p * (dp - delta[:, None]) * logit_scale
         Di = tl.load(D + offs_m_curr, mask=offs_m_curr < seqlen_q, other=0.0)
-        db_contrib = p * (dp - Di[:, None])
-        ds = (db_contrib * logit_scale).to(q.dtype)
+        db = p * (dp - Di[:, None])
+        ds = db * logit_scale
 
-        # compute dscale = db * qk
+        # compute dscale = sum(ds * qk)
         if SCALE_TYPE == "tensor":
-            dlog_scale = tl.sum(db_contrib * qk)
-            dscale_contrib = dlog_scale * logit_scale
-            dscale += dscale_contrib
+            dscale += tl.sum(ds * qk)
         
         # compute dk = dot(ds.T, q)
-        dk_n += tl.dot(tl.trans(ds), q_n.to(tl.float16))
+        dk_n += tl.dot(tl.trans(ds.to(q.dtype)), q_n.to(q.dtype))
         
         # compute dq
-        dq_n_contrib = tl.dot(ds, k_n.to(tl.float16))
-        dq_contrib = dq_n_contrib / norm_q - (q * tl.sum(dq_n_contrib * q_n, axis=1, keep_dims=True)) / (norm_q * norm_q)
+        dq_n = tl.dot(ds.to(q.dtype), k_n.to(k.dtype))
+        dq_contrib = dq_n / norm_q - (q * tl.sum(dq_n * q_n, axis=1, keep_dims=True)) / (norm_q * norm_q)
 
         if HAS_BIAS:
             if EVEN_M & EVEN_N:
-                tl.atomic_add(dbias_ptrs, db_contrib)
+                tl.atomic_add(dbias_ptrs, db)
             else:
                 db_mask = (offs_m_curr[:, None] < seqlen_q) & (offs_n[None, :] < seqlen_k)
-                tl.atomic_add(dbias_ptrs, db_contrib, mask=db_mask)
+                tl.atomic_add(dbias_ptrs, db, mask=db_mask)
         
         if not ATOMIC_ADD:
             if EVEN_M & EVEN_HEADDIM:  # Race condition if we just do EVEN_M
@@ -469,7 +467,7 @@ def _bwd_kernel(
         Scale += off_h
         DScale += off_h
         if not SEQUENCE_PARALLEL:
-            dscale = tl.zeros([], tl.float32)
+            dscale = tl.zeros([], dtype=tl.float32)
     # pointer to row-wise quantities in value-like data
     D += off_bw * stride_lse_bw + off_h * stride_lse_h
     LSE += off_bw * stride_lse_bw + off_h * stride_lse_h
@@ -563,7 +561,7 @@ def _bwd_kernel(
     
     # store dscale
     if SCALE_TYPE == "tensor":
-        tl.atomic_add(DScale, dscale)
+        tl.atomic_add(DScale, dscale.to(DScale.dtype.element_ty))
 
 
 def _flash_attn_backward(
@@ -574,8 +572,7 @@ def _flash_attn_backward(
         do = do.contiguous()
     batch_window_size, n_heads, seqlen_q, d = q.shape
     _, _, seqlen_k, _ = k.shape
-    # assert d in {16, 32, 64, 128}
-    assert d <= 128
+    assert d in {16, 32, 64, 128}
     seqlen_q_rounded = math.ceil(seqlen_q / 64) * 64
     assert lse.shape == (batch_window_size, n_heads, seqlen_q_rounded)
     assert q.stride(-1) == k.stride(-1) == v.stride(-1) == o.stride(-1) == 1
@@ -708,6 +705,8 @@ def _flash_attn_backward(
     if has_bias:
         db.copy_(db_accum.to(db.dtype))
     if scale_type == "tensor":
-        clamp_mask = (logit_scale <= torch.log(torch.tensor(100.0, device=logit_scale.device))).float()
-        dscale_accum = dscale_accum * clamp_mask
-        dscale.copy_(dscale_accum.to(dscale.dtype))
+        clamp_mask = (
+            logit_scale <= torch.log(torch.tensor(100.0, dtype=logit_scale.dtype, device=logit_scale.device))
+        ).float()
+        dscale_clamped = dscale_accum * clamp_mask
+        dscale.copy_(dscale_clamped.to(dscale.dtype))

@@ -1,22 +1,22 @@
 import triton
 
 # Benchmarking configuration
-BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 4, 4, 8, 32  # Aligned with test_attention_correctness
+BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 8, 4, 6, 32  # Aligned with test_attention_correctness
 
 benchmark_configs = [
     triton.testing.Benchmark(
         x_names=["seqlen"],
-        x_vals=[i**2 for i in [8, 12, 16, 24, 32]],
+        x_vals=[i**2 for i in [8, 12, 16, 24, 32, 40]],
         line_arg="provider",
         line_vals=[
-            "triton-cos-attn",
-            "torch-cos-attn",
-            "torch-compile-cos-attn",
+            "triton-win-attn-2",
+            "torch-win-attn-2",
+            "torch-compile-win-attn-2",
         ],
         line_names=[
-            "Triton-Cos-Attn (FLOPS)",
-            "PyTorch-Cos-Attn (FLOPS)",
-            "PyTorch-Compile-Cos-Attn (FLOPS)",
+            "Triton-Win-Attn-2 (TFLOPS)",
+            "PyTorch-Win-Attn-2 (TFLOPS)",
+            "PyTorch-Compile-Win-Attn-2 (TFLOPS)",
         ],
         styles=[
             ("red", "-"),
@@ -24,7 +24,7 @@ benchmark_configs = [
             ("cyan", "-."),
         ],
         ylabel="TFLOPS",  # Changed from Time (ms) to TFLOPS
-        plot_name=f"cos-attention-comparison-batch{BATCH}-window{N_WINDOWS}-head{N_HEADS}-d{HEAD_DIM}-{mode}",
+        plot_name=f"win-attention-comparison-batch{BATCH}-window{N_WINDOWS}-head{N_HEADS}-d{HEAD_DIM}-{mode}",
         args={
             "BATCH": BATCH,
             "W": N_WINDOWS,

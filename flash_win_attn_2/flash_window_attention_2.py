@@ -2,7 +2,7 @@ import math
 import torch
 from .kernels import _flash_attn_forward, _flash_attn_backward
 
-class FlashWindowCosineAttention(torch.autograd.Function):
+class FlashWindowAttention2(torch.autograd.Function):
     @staticmethod
     def forward(ctx, q, k, v, logit_scale=None, bias=None, mask=None):
 

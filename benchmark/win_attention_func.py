@@ -1,11 +1,17 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import torch
 import torch.nn.functional as F
 
-from fwca import FlashWindowCosineAttention
 
-flash_win_cos_attn = FlashWindowCosineAttention.apply
+from flash_win_attn_2 import FlashWindowAttention2
 
-def cos_attention_torch(
+flash_win_attn_2 = FlashWindowAttention2.apply
+
+def win_attention_torch(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     k: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     v: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
@@ -20,7 +26,7 @@ def cos_attention_torch(
     k_norm = F.normalize(k, p=2, dim=-1) # (batch_size * windows, h, seq, head_dim)
     qk = torch.matmul(q_norm, k_norm.transpose(-2, -1)) # (batch_size * windows, h, seq, seq)
     if logit_scale is not None:
-        logit_scale = logit_scale.clamp(logit_scale, max=torch.log(torch.tensor(100., device=logit_scale.device))).exp()
+        logit_scale = logit_scale.clamp(max=torch.log(torch.tensor(100.0, dtype=logit_scale.dtype, device=logit_scale.device))).exp()
     else:
         logit_scale = 1.0 / torch.sqrt(torch.tensor(head_dim, device=q.device))
     attn = qk * logit_scale # (batch_size * windows, h, seq, seq)
@@ -37,7 +43,7 @@ def cos_attention_torch(
 
 
 @torch.compile
-def cos_attention_torch_compile(
+def win_attention_torch_compile(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     k: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     v: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
@@ -52,7 +58,7 @@ def cos_attention_torch_compile(
     k_norm = F.normalize(k, p=2, dim=-1) # (batch_size * windows, h, seq, head_dim)
     qk = torch.matmul(q_norm, k_norm.transpose(-2, -1)) # (batch_size * windows, h, seq, seq)
     if logit_scale is not None:
-        logit_scale = logit_scale.clamp(logit_scale, max=torch.log(torch.tensor(100., device=logit_scale.device))).exp()
+        logit_scale = logit_scale.clamp(max=torch.log(torch.tensor(100.0, dtype=logit_scale.dtype, device=logit_scale.device))).exp()
     else:
         logit_scale = 1.0 / torch.sqrt(torch.tensor(head_dim, device=q.device))
     attn = qk * logit_scale # (batch_size * windows, h, seq, seq)
