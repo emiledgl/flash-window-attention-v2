@@ -286,8 +286,10 @@ def _flash_attn_forward(q, k, v, logit_scale, bias=None, mask=None, scale_type="
         o = torch.empty_like(q)
 
         BLOCK_HEADDIM = max(triton.next_power_of_2(d), 16)
-        BLOCK_M = 32 if seqlen_q <= 64 else 64
-        BLOCK_N = 32 if seqlen_k <= 64 else 64
+        
+
+        BLOCK_M = 32 if seqlen_q <= 128 else 64
+        BLOCK_N = 32 if seqlen_k <= 128 else 64
         num_warps = 4 if d <= 64 else 8
         grid = (triton.cdiv(seqlen_q, BLOCK_M), batch_window_size, n_heads)
 

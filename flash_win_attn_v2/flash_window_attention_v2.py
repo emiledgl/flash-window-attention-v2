@@ -2,7 +2,7 @@ import math
 import torch
 from .kernels import _flash_attn_forward, _flash_attn_backward
 
-class FlashWindowAttention2(torch.autograd.Function):
+class FlashWindowAttentionV2(torch.autograd.Function):
     @staticmethod
     def forward(ctx, q, k, v, logit_scale=None, bias=None, mask=None):
 
@@ -55,3 +55,6 @@ class FlashWindowAttention2(torch.autograd.Function):
             scale_type=scale_type
         )
         return dq, dk, dv, dscale, db, None
+    
+
+flash_win_attn_v2 = FlashWindowAttentionV2.apply

@@ -7,9 +7,9 @@ import torch
 import torch.nn.functional as F
 
 
-from flash_win_attn_2 import FlashWindowAttention2
+from flash_win_attn_v2 import FlashWindowAttentionV2
 
-flash_win_attn_2 = FlashWindowAttention2.apply
+flash_win_attn_v2 = FlashWindowAttentionV2.apply
 
 def win_attention_torch(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)

@@ -3,15 +3,11 @@ import triton
 
 from utils import calculate_cosine_attention_flops
 from config import benchmark_configs
-from win_attention_func import flash_win_attn_2, win_attention_torch, win_attention_torch_compile
+from win_attention_func import flash_win_attn_v2, win_attention_torch, win_attention_torch_compile
 
-#torch._functorch.config.donated_buffer = False
 
 def test_attention_correctness(use_logit_scale=True, dtype=torch.float16):
-    """
-    Test the correctness of the Triton FlashAttention implementation against PyTorch.
-    Reports only the max absolute error for the forward pass and gradients.
-    """
+
     #torch.manual_seed(0)
     device = torch.device("cuda")
 
@@ -29,13 +25,11 @@ def test_attention_correctness(use_logit_scale=True, dtype=torch.float16):
     ).to(device=device, dtype=dtype)
     if use_logit_scale:
         logit_scale = torch.randn((nheads, 1, 1), device=device, dtype=dtype, requires_grad=True)
-        # logit_scale = torch.nn.Parameter(torch.log(10 * torch.ones((nheads, 1, 1))), requires_grad=True).to(device=device, dtype=dtype)
-        # logit_scale.retain_grad()
     else:
         logit_scale = None
 
     # Compute outputs
-    o_flash = flash_win_attn_2(q, k, v, logit_scale, bias, mask)
+    o_flash = flash_win_attn_v2(q, k, v, logit_scale, bias, mask)
     o_torch = win_attention_torch(q, k, v, logit_scale, bias, mask)
     o_compile = win_attention_torch_compile(q, k, v, logit_scale, bias, mask)
 
@@ -114,7 +108,7 @@ def test_attention_correctness(use_logit_scale=True, dtype=torch.float16):
 
 
 @triton.testing.perf_report(benchmark_configs)
-def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, provider, dtype=torch.float16, use_logit_scale=True):
+def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, metric, provider, dtype=torch.float16, use_logit_scale=True):
 
     device = torch.device("cuda")
 
@@ -128,13 +122,11 @@ def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, provider, dt
     ).to(device=device, dtype=dtype)
     if use_logit_scale:
         logit_scale = torch.randn((H, 1, 1), device=device, dtype=dtype, requires_grad=True)
-        # logit_scale = torch.nn.Parameter(torch.log(10 * torch.ones((nheads, 1, 1))), requires_grad=True).to(device=device, dtype=dtype)
-        # logit_scale.retain_grad()
     else:
         logit_scale = None
 
     def forward_backward_triton():
-        out = flash_win_attn_2(q, k, v, logit_scale, bias, mask)
+        out = flash_win_attn_v2(q, k, v, logit_scale, bias, mask)
         loss = (0 - out.sum())
         loss.backward()
         torch.cuda.synchronize()
@@ -174,7 +166,7 @@ def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, provider, dt
 
     if mode == "fwd":
         if provider == "triton-win-attn-2":
-            fn = lambda: flash_win_attn_2(q, k, v, logit_scale, bias, mask)
+            fn = lambda: flash_win_attn_v2(q, k, v, logit_scale, bias, mask)
         elif provider == "torch-win-attn-2":
             fn = lambda: win_attention_torch(q, k, v, logit_scale, bias, mask)
         elif provider == "torch-compile-win-attn-2":
@@ -196,17 +188,20 @@ def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, provider, dt
     # Run benchmark
     ms = triton.testing.do_bench(fn)
 
-    # Calculate FLOPS
-    total_flops_fwd = calculate_cosine_attention_flops(BATCH, W, H, seqlen, HEAD_DIM)
+    if metric == "TFLOPS":
+        # Calculate FLOPS
+        total_flops_fwd = calculate_cosine_attention_flops(BATCH, W, H, seqlen, HEAD_DIM)
 
-    # Backward pass has roughly 2x the FLOPS of forward pass
-    total_flops = total_flops_fwd * (3 if mode == "bwd" else 1)
+        # Backward pass has roughly 2x the FLOPS of forward pass
+        total_flops = total_flops_fwd * (3 if mode == "bwd" else 1)
 
-    # Calculate TFLOPS
-    tflops = total_flops * 1e-12 / (ms * 1e-3)
+        # Calculate TFLOPS
+        tflops = total_flops * 1e-12 / (ms * 1e-3)
 
-    # Return TFLOPS for plotting
-    return tflops
+        # Return TFLOPS for plotting
+        return tflops
+    else:
+        return ms
 
 
 if __name__ == "__main__":

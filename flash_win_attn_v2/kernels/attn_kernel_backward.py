@@ -582,8 +582,8 @@ def _flash_attn_backward(
     dq_accum = torch.zeros_like(q, dtype=torch.float32)
     delta = torch.empty_like(lse)
 
-    BLOCK_M = 32 if seqlen_q <= 64 else 64
-    BLOCK_N = 32 if seqlen_k <= 64 else 64
+    BLOCK_M = 32 if seqlen_q <= 128 else 64
+    BLOCK_N = 32 if seqlen_k <= 128 else 64
     BLOCK_HEADDIM = max(triton.next_power_of_2(d), 16)
     grid = (triton.cdiv(seqlen_q, BLOCK_M), batch_window_size, n_heads)
     _bwd_preprocess_do_o_dot[grid](
