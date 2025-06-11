@@ -1,7 +1,0 @@
-seq_len,classic bwd memory (MB),compile bwd memory (MB),flash bwd memory (MB),bwd memory reduction vs classic,bwd memory reduction vs compile
-64,82.42,107.07,74.77,1.10,1.43
-144,231.88,238.48,166.59,1.39,1.43
-256,542.37,495.19,328.01,1.65,1.51
-576,2169.29,1925.52,1016.19,2.13,1.89
-1024,6227.95,5464.45,2518.36,2.47,2.17
-1600,14562.28,12691.45,5412.89,2.69,2.34

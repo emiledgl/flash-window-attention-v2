@@ -9,10 +9,10 @@ from win_attention_func import flash_win_attn_v2, win_attention_torch, win_atten
 def test_attention_correctness(use_logit_scale=True, dtype=torch.float16):
 
     #torch.manual_seed(0)
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Fixed sequence length
-    batch, nwindows, nheads, seqlen, d = 8, 16, 6, 1024, 32
+    batch, nwindows, nheads, seqlen, d = 16, 16, 6, 256, 32
 
     # Initialize input tensors
     q, k, v = [
@@ -110,7 +110,7 @@ def test_attention_correctness(use_logit_scale=True, dtype=torch.float16):
 @triton.testing.perf_report(benchmark_configs)
 def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, metric, provider, dtype=torch.float16, use_logit_scale=True):
 
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize tensors with same shape ordering as test_attention_correctness
     q = torch.randn((BATCH * W, H, seqlen, HEAD_DIM), dtype=dtype, device=device, requires_grad=True)

@@ -4,8 +4,8 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Assuming these functions are defined in a separate file as in the original code
 from win_attention_func import flash_win_attn_v2, win_attention_torch, win_attention_torch_compile
+
 
 def benchmark_memory_allocation(
     seq_lens: list,
@@ -227,11 +227,11 @@ def run_memory_benchmarks():
     """Run all benchmarks with a focus on memory allocation."""
     # Parameters for tests
     batch_size = 16
-    num_windows = 4
+    num_windows = 16
     num_heads = 6
     head_dim = 32
     
-    seq_lens = [8**2, 12**2, 16**2, 24**2, 32**2, 40**2]
+    seq_lens = [i**2 for i in [8, 12, 16, 24]]
     
 
     print("\n=== Running Memory Allocation Benchmark ===")

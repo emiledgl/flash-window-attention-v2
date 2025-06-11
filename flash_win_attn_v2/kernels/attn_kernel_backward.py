@@ -352,32 +352,32 @@ def _bwd_kernel_one_col_block(
 
     return dscale
 
-
-# @triton.autotune(
-#     configs=[
-#         triton.Config(
-#             {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": False},
-#             num_warps=4,
-#             num_stages=1,
-#         ),
-#         triton.Config(
-#             {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": True},
-#             num_warps=4,
-#             num_stages=1,
-#         ),
-#         triton.Config(
-#             {"BLOCK_M": 128, "BLOCK_N": 128, "SEQUENCE_PARALLEL": False},
-#             num_warps=4,
-#             num_stages=1,
-#         ),
-#         triton.Config(
-#             {"BLOCK_M": 128, "BLOCK_N": 128, "SEQUENCE_PARALLEL": True},
-#             num_warps=4,
-#             num_stages=1,
-#         ),
-#     ],
-#     key=["CACHE_KEY_SEQLEN_Q", "CACHE_KEY_SEQLEN_K", "BLOCK_HEADDIM"],
-# )
+# error in bias and scale gradient computation when using multiple autotune configs
+@triton.autotune(
+    configs=[
+        # triton.Config(
+        #     {"BLOCK_M": 64, "BLOCK_N": 32, "SEQUENCE_PARALLEL": True},
+        #     num_warps=4,
+        #     num_stages=1,
+        # ),
+        # triton.Config(
+        #     {"BLOCK_M": 64, "BLOCK_N": 32, "SEQUENCE_PARALLEL": False},
+        #     num_warps=4,
+        #     num_stages=1,
+        # ),
+        triton.Config(
+            {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": True},
+            num_warps=4,
+            num_stages=1,
+        ),
+        # triton.Config(
+        #     {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": False},
+        #     num_warps=4,
+        #     num_stages=1,
+        # ),
+    ],
+    key=["CACHE_KEY_SEQLEN_Q", "CACHE_KEY_SEQLEN_K", "BLOCK_HEADDIM"],
+)
 @triton.heuristics(
     {
         "EVEN_M": lambda args: args["seqlen_q"] % args["BLOCK_M"] == 0,
@@ -572,7 +572,7 @@ def _flash_attn_backward(
         do = do.contiguous()
     batch_window_size, n_heads, seqlen_q, d = q.shape
     _, _, seqlen_k, _ = k.shape
-    assert d in {16, 32, 64, 128}
+    assert d <= 128
     seqlen_q_rounded = math.ceil(seqlen_q / 64) * 64
     assert lse.shape == (batch_window_size, n_heads, seqlen_q_rounded)
     assert q.stride(-1) == k.stride(-1) == v.stride(-1) == o.stride(-1) == 1
@@ -582,10 +582,12 @@ def _flash_attn_backward(
     dq_accum = torch.zeros_like(q, dtype=torch.float32)
     delta = torch.empty_like(lse)
 
-    BLOCK_M = 32 if seqlen_q <= 128 else 64
-    BLOCK_N = 32 if seqlen_k <= 128 else 64
     BLOCK_HEADDIM = max(triton.next_power_of_2(d), 16)
-    grid = (triton.cdiv(seqlen_q, BLOCK_M), batch_window_size, n_heads)
+    BLOCK_M = 32 if seqlen_q <= 64 else 64
+    BLOCK_N = 32 if seqlen_k <= 64 else 64
+    # bug in backward pass when increasing nump_warps to 8
+    num_warps = 4
+    grid = lambda META: (triton.cdiv(seqlen_q, META["BLOCK_M"]), batch_window_size, n_heads)
     _bwd_preprocess_do_o_dot[grid](
         o,
         do,
@@ -600,14 +602,13 @@ def _flash_attn_backward(
         delta.stride(1),
         seqlen_q,
         d,
-        BLOCK_M=BLOCK_M,
+        BLOCK_M=64,
         BLOCK_HEADDIM=BLOCK_HEADDIM,
     )
 
     if scale_type == "tensor":
         if dscale.stride(-1) != 1:
             dscale = dscale.contiguous()
-        # Use double precision for accumulation if available
         dscale_accum = torch.zeros_like(dscale, dtype=torch.float32)
     else:
         dscale_accum = None
@@ -634,11 +635,9 @@ def _flash_attn_backward(
             mask = mask.contiguous()
     n_windows = mask.shape[0] if mask is not None else None
     mask_strides = (mask.stride(0), mask.stride(1)) if has_mask else (0, 0)
-    
-    SEQUENCE_PARALLEL = True
-    num_warps = 4 if d <= 64 else 8
-    grid = (
-        triton.cdiv(seqlen_k, BLOCK_N) if SEQUENCE_PARALLEL else 1,
+
+    grid = lambda META: (
+        triton.cdiv(seqlen_k, META["BLOCK_N"]) if META["SEQUENCE_PARALLEL"] else 1,
         batch_window_size,
         n_heads,
     )
@@ -694,11 +693,11 @@ def _flash_attn_backward(
         has_bias,
         has_mask,
         BLOCK_HEADDIM,
-        SEQUENCE_PARALLEL=SEQUENCE_PARALLEL,
-        BLOCK_M=BLOCK_M,
-        BLOCK_N=BLOCK_N,
-        num_warps=num_warps,
-        num_stages=1,
+        # SEQUENCE_PARALLEL=True,
+        # BLOCK_M=BLOCK_M,
+        # BLOCK_N=BLOCK_N,
+        # num_warps=num_warps,
+        # num_stages=1,
     )
 
     dq.copy_(dq_accum.to(dq.dtype))

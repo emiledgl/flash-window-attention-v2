@@ -10,15 +10,6 @@ def calculate_cosine_attention_flops(
     """
     Calculates the total number of floating-point operations (FLOPS)
     for the cosine attention mechanism.
-    Args:
-        batch_size (int): The batch size (B).
-        nwindows (int): The number of windows (W).
-        nheads (int): The number of attention heads (H).
-        seqlen (int): The sequence length (S).
-        head_dim (int): The dimension of each head (D).
-
-    Returns:
-        int: The total estimated number of FLOPS for the cosine attention mechanism.
     """
 
     B = batch_size

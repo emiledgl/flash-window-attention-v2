@@ -3,15 +3,25 @@ import torch
 import triton
 import triton.language as tl
 
+configs = [
+    triton.Config({"BLOCK_M": BM, "BLOCK_N": BN}, num_stages=s, num_warps=w)
+    for BM in [16, 32, 64]
+    for BN in [16, 32, 64]
+    for s in ([1, 2])
+    for w in [4, 8]
+]
 
-# @triton.autotune(
-#     configs=[
-#         triton.Config({"BLOCK_M": 128, "BLOCK_N": 128}, num_warps=4, num_stages=1),
-#         triton.Config({"BLOCK_M": 64, "BLOCK_N": 64}, num_warps=4, num_stages=1),
-#         triton.Config({"BLOCK_M": 32, "BLOCK_N": 32}, num_warps=4, num_stages=1),
-#     ],
-#     key=['CACHE_KEY_SEQLEN_Q', 'CACHE_KEY_SEQLEN_K', 'BLOCK_HEADDIM']
-# )
+def keep(conf):
+    BLOCK_M = conf.kwargs["BLOCK_M"]
+    BLOCK_N = conf.kwargs["BLOCK_N"]
+    if BLOCK_M != BLOCK_N:
+        return False
+    return True
+
+@triton.autotune(
+    list(filter(keep, configs)),
+    key=["CACHE_KEY_SEQLEN_Q", "CACHE_KEY_SEQLEN_K", "BLOCK_HEADDIM"]
+)
 @triton.heuristics(
     {
         "EVEN_M": lambda args: args["seqlen_q"] % args["BLOCK_M"] == 0,
@@ -254,9 +264,9 @@ def _flash_attn_forward(q, k, v, logit_scale, bias=None, mask=None, scale_type="
         _, _, seqlen_k, _ = k.shape
         assert k.shape == (batch_window_size, n_heads, seqlen_k, d)
         assert v.shape == (batch_window_size, n_heads, seqlen_k, d)
-        assert d in {16, 32, 64, 128}
-        assert q.dtype == k.dtype == v.dtype
-        assert q.dtype in [torch.float16, torch.bfloat16]
+        assert d <= 128, "FlashAttention only support head dimensions up to 128"
+        assert q.dtype == k.dtype == v.dtype, "All tensors must have the same type"
+        assert q.dtype in [torch.float16, torch.bfloat16], "Only support fp16 and bf16"
         assert q.is_cuda and k.is_cuda and v.is_cuda and logit_scale.is_cuda
 
         if scale_type == "tensor":
@@ -284,14 +294,12 @@ def _flash_attn_forward(q, k, v, logit_scale, bias=None, mask=None, scale_type="
         seqlen_q_rounded = math.ceil(seqlen_q / 64) * 64
         lse = torch.empty((batch_window_size, n_heads, seqlen_q_rounded), device=q.device, dtype=torch.float32)
         o = torch.empty_like(q)
-
-        BLOCK_HEADDIM = max(triton.next_power_of_2(d), 16)
         
-
-        BLOCK_M = 32 if seqlen_q <= 128 else 64
-        BLOCK_N = 32 if seqlen_k <= 128 else 64
+        BLOCK_HEADDIM = max(triton.next_power_of_2(d), 16)
+        BLOCK_M = 32 if seqlen_q <= 64 else 64
+        BLOCK_N = 32 if seqlen_k <= 64 else 64
         num_warps = 4 if d <= 64 else 8
-        grid = (triton.cdiv(seqlen_q, BLOCK_M), batch_window_size, n_heads)
+        grid = lambda META: (triton.cdiv(seqlen_q, META["BLOCK_M"]), batch_window_size, n_heads)
 
         _fwd_kernel[grid](
             q,
@@ -329,9 +337,9 @@ def _flash_attn_forward(q, k, v, logit_scale, bias=None, mask=None, scale_type="
             has_bias,
             has_mask,
             BLOCK_HEADDIM,
-            BLOCK_M=BLOCK_M,
-            BLOCK_N=BLOCK_N,
-            num_warps=num_warps,
-            num_stages=1,
+            # BLOCK_M=BLOCK_M,
+            # BLOCK_N=BLOCK_N,
+            # num_warps=num_warps,
+            # num_stages=1,
             )
         return o, lse, logit_scale

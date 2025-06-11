@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torch.nn.functional as F
 
-
 from flash_win_attn_v2 import FlashWindowAttentionV2
 
 flash_win_attn_v2 = FlashWindowAttentionV2.apply

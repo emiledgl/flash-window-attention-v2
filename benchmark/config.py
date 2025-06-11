@@ -1,7 +1,7 @@
 import triton
 
 # Benchmarking configuration
-BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 16, 4, 6, 32  # Aligned with test_attention_correctness
+BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 16, 16, 6, 32  # Aligned with test_attention_correctness
 
 benchmark_configs = []
 
@@ -12,7 +12,7 @@ for mode in ["fwd", "bwd"]:
         
         config = triton.testing.Benchmark(
             x_names=["seqlen"],
-            x_vals=[i**2 for i in [8, 12, 16]],
+            x_vals=[i**2 for i in [8, 12, 16, 24]],
             line_arg="provider",
             line_vals=[
                 "triton-win-attn-2",
