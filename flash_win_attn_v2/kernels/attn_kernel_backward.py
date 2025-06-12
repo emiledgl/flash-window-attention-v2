@@ -355,21 +355,21 @@ def _bwd_kernel_one_col_block(
 # error in bias and scale gradient computation when using multiple autotune configs
 @triton.autotune(
     configs=[
-        # triton.Config(
-        #     {"BLOCK_M": 64, "BLOCK_N": 32, "SEQUENCE_PARALLEL": True},
-        #     num_warps=4,
-        #     num_stages=1,
-        # ),
+        triton.Config(
+            {"BLOCK_M": 64, "BLOCK_N": 32, "SEQUENCE_PARALLEL": True},
+            num_warps=4,
+            num_stages=1,
+        ),
         # triton.Config(
         #     {"BLOCK_M": 64, "BLOCK_N": 32, "SEQUENCE_PARALLEL": False},
         #     num_warps=4,
         #     num_stages=1,
         # ),
-        triton.Config(
-            {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": True},
-            num_warps=4,
-            num_stages=1,
-        ),
+        # triton.Config(
+        #     {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": True},
+        #     num_warps=4,
+        #     num_stages=1,
+        # ),
         # triton.Config(
         #     {"BLOCK_M": 64, "BLOCK_N": 64, "SEQUENCE_PARALLEL": False},
         #     num_warps=4,

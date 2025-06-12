@@ -1,10 +1,14 @@
 import os
-import torch
+import sys
 import csv
+
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from win_attention_func import flash_win_attn_v2, win_attention_torch, win_attention_torch_compile
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from flash_win_attn_v2 import flash_win_attn_v2_func, win_attention_torch, win_attention_torch_compile
 
 
 def benchmark_memory_allocation(
@@ -53,7 +57,7 @@ def benchmark_memory_allocation(
         for _ in range(3):
             _ = win_attention_torch(q_classic, k_classic, v_classic, logit_scale_classic, bias_classic, mask)
             _ = win_attention_torch_compile(q_compile, k_compile, v_compile, logit_scale_compile, bias_compile, mask)
-            _ = flash_win_attn_v2(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
+            _ = flash_win_attn_v2_func(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
 
         # Benchmark forward pass memory
         classic_fwd_memory, compile_fwd_memory, flash_fwd_memory = [], [], []
@@ -72,7 +76,7 @@ def benchmark_memory_allocation(
 
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
-            _ = flash_win_attn_v2(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
+            _ = flash_win_attn_v2_func(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
             torch.cuda.synchronize()
             flash_fwd_memory.append(torch.cuda.max_memory_allocated() / (1024 ** 2))  # MB
 
@@ -98,7 +102,7 @@ def benchmark_memory_allocation(
 
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
-            out3 = flash_win_attn_v2(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
+            out3 = flash_win_attn_v2_func(q_flash, k_flash, v_flash, logit_scale_flash, bias_flash, mask)
             out3.backward(grad_output)
             torch.cuda.synchronize()
             flash_bwd_memory.append(torch.cuda.max_memory_allocated() / (1024 ** 2))  # MB
@@ -255,4 +259,6 @@ def run_memory_benchmarks():
 
 
 if __name__ == "__main__":
+    print("\nRunning memory benchmarks...")
+    print("-" * 50)
     run_memory_benchmarks()

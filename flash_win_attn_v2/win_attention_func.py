@@ -1,14 +1,12 @@
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import torch
 import torch.nn.functional as F
 
-from flash_win_attn_v2 import FlashWindowAttentionV2
+from .flash_window_attention_v2 import FlashWindowAttentionV2
 
-flash_win_attn_v2 = FlashWindowAttentionV2.apply
+flash_win_attn_v2_func = FlashWindowAttentionV2.apply
 
 def win_attention_torch(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
@@ -30,7 +28,7 @@ def win_attention_torch(
         logit_scale = 1.0 / torch.sqrt(torch.tensor(head_dim, device=q.device))
     attn = qk * logit_scale # (batch_size * windows, h, seq, seq)
     if bias is not None:
-        attn += bias
+        attn += bias.unsqueeze(0)
     if mask is not None:
         windows = mask.shape[0]
         attn = attn.view(bw_size // windows, windows, n_heads, seq_len_q, seq_len_k) # (batch, windows, h, seq, seq)
@@ -62,7 +60,7 @@ def win_attention_torch_compile(
         logit_scale = 1.0 / torch.sqrt(torch.tensor(head_dim, device=q.device))
     attn = qk * logit_scale # (batch_size * windows, h, seq, seq)
     if bias is not None:
-        attn += bias
+        attn += bias.unsqueeze(0)
     if mask is not None:
         windows = mask.shape[0]
         attn = attn.view(bw_size // windows, windows, n_heads, seq_len_q, seq_len_k) # (batch, windows, h, seq, seq)

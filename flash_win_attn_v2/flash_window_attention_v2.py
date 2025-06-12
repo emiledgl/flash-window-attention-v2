@@ -55,6 +55,3 @@ class FlashWindowAttentionV2(torch.autograd.Function):
             scale_type=scale_type
         )
         return dq, dk, dv, dscale, db, None
-    
-
-flash_win_attn_v2 = FlashWindowAttentionV2.apply

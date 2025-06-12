@@ -1,5 +1,26 @@
 import torch
 
+import torch
+import time
+
+
+def measure_speed_memory(f, *args, **kwargs):
+    # warm up
+    f(*args, **kwargs)
+
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
+    torch.cuda.synchronize()
+    start = time.time()
+    for i in range(100):
+        f(*args, **kwargs)
+    torch.cuda.synchronize()
+    t = time.time() - start
+    memory = torch.cuda.max_memory_allocated() / (1024 ** 3)  # GB
+
+    return t, memory
+
+
 def calculate_cosine_attention_flops(
     batch_size: int,
     nwindows: int,
