@@ -41,3 +41,14 @@ for mode in ["fwd", "bwd"]:
             }
         )
         benchmark_configs.append(config)
+
+
+swin_transformer_config = {
+    "img_size": 256,
+    "patch_size": 2,
+    "in_chans": 3,
+    "embed_dim": 96,
+    "depths": [2, 2, 6, 2],
+    "num_heads": [3, 6, 12, 24],
+    "window_size": 16,
+}
