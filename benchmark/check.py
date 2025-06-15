@@ -118,4 +118,4 @@ if __name__ == "__main__":
 
     print("Running correctness tests...")
     print("-" * 50)
-    test_attention_correctness(batch, nwindows, nheads, seqlen, d)
+    test_attention_correctness(batch, nwindows, nheads, seqlen, d, dtype=torch.float16)

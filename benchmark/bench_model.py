@@ -39,7 +39,7 @@ def backward(batch, config, dtype=torch.float16):
 
 
 def run_model_benchmarks():
-    batch_sizes = [4, 8, 16, 32, 64]
+    batch_sizes = [8, 16, 32, 64]
     dtype = torch.float16
     
     flash_config = swin_transformer_config.copy()
@@ -89,8 +89,7 @@ def run_model_benchmarks():
         # Clear GPU cache between batches
         torch.cuda.empty_cache()
     
-    create_plots(results=results)
-    save_results_to_csv(results=results)
+    save_results_to_csv(results, swin_transformer_config)
 
     return results
 

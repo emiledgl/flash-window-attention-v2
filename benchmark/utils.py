@@ -88,10 +88,10 @@ def measure_memory_usage(func, *args, **kwargs):
     return result, memory_used
 
 
-def save_results_to_csv(results):
+def save_results_to_csv(results, config):
     """Save forward and backward results to separate CSV files"""
 
-    results_dir = "benchmark/results/model"
+    results_dir = "benchmark/results"
     os.makedirs(results_dir, exist_ok=True)
 
     # Forward pass results
@@ -108,8 +108,7 @@ def save_results_to_csv(results):
     forward_data['memory_ratio'] = [c/f for c, f in zip(forward_data['classic_memory_gb'], forward_data['flash_memory_gb'])]
     
     forward_df = pd.DataFrame(forward_data)
-    forward_df.to_csv(os.path.join(results_dir, 'swin_transformer_v2_forward_comparaison.csv'), index=False)
-    print("Forward pass results saved to 'swin_transformer_v2_forward_comparaison.csv'")
+    forward_df.to_csv(os.path.join(results_dir, f'swin_transformer_v2_forward_comparaison-patch{config["patch_size"]}-window{config["window_size"]}.csv'), index=False)
     
     # Backward pass results
     backward_data = {
@@ -125,78 +124,6 @@ def save_results_to_csv(results):
     backward_data['memory_ratio'] = [c/f for c, f in zip(backward_data['classic_memory_gb'], backward_data['flash_memory_gb'])]
     
     backward_df = pd.DataFrame(backward_data)
-    backward_df.to_csv(os.path.join(results_dir, 'swin_transformer_v2_backward_comparaison.csv'), index=False)
-    print("Backward pass results saved to 'swin_transformer_v2_backward_comparaison.csv'")
+    backward_df.to_csv(os.path.join(results_dir, f'swin_transformer_v2_backward_comparaison-patch{config["patch_size"]}-window{config["window_size"]}.csv'), index=False)
     
     return forward_df, backward_df
-
-
-def create_plots(results):
-    # Set up the plotting style
-    results_dir = "benchmark/results/model"
-    os.makedirs(results_dir, exist_ok=True)
-    plt.style.use('default')
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    fig.suptitle('Swin Transformer V2 Performance: Flash vs Classic Attention', fontsize=16, fontweight='bold')
-    
-    batch_sizes = results['batch_sizes']
-    
-    # Color scheme
-    classic_color = '#e74c3c'  # Red
-    flash_color = '#3498db'    # Blue
-    
-    # Plot 1: Forward Pass - Execution Time
-    ax1 = axes[0, 0]
-    ax1.plot(batch_sizes, results['forward']['classic_time'], 'o-', 
-             color=classic_color, linewidth=2, markersize=8, label='Classic Attention')
-    ax1.plot(batch_sizes, results['forward']['flash_time'], 's-', 
-             color=flash_color, linewidth=2, markersize=8, label='Flash Attention')
-    ax1.set_title('Forward Pass - Execution Time', fontweight='bold')
-    ax1.set_xlabel('Batch Size')
-    ax1.set_ylabel('Time (ms)')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-    ax1.set_yscale('log')
-    
-    # Plot 2: Forward Pass - Memory Usage
-    ax2 = axes[0, 1]
-    ax2.plot(batch_sizes, results['forward']['classic_memory'], 'o-', 
-             color=classic_color, linewidth=2, markersize=8, label='Classic Attention')
-    ax2.plot(batch_sizes, results['forward']['flash_memory'], 's-', 
-             color=flash_color, linewidth=2, markersize=8, label='Flash Attention')
-    ax2.set_title('Forward Pass - Memory Usage', fontweight='bold')
-    ax2.set_xlabel('Batch Size')
-    ax2.set_ylabel('Memory (GB)')
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    
-    # Plot 3: Backward Pass - Execution Time
-    ax3 = axes[1, 0]
-    ax3.plot(batch_sizes, results['backward']['classic_time'], 'o-', 
-             color=classic_color, linewidth=2, markersize=8, label='Classic Attention')
-    ax3.plot(batch_sizes, results['backward']['flash_time'], 's-', 
-             color=flash_color, linewidth=2, markersize=8, label='Flash Attention')
-    ax3.set_title('Backward Pass - Execution Time', fontweight='bold')
-    ax3.set_xlabel('Batch Size')
-    ax3.set_ylabel('Time (ms)')
-    ax3.legend()
-    ax3.grid(True, alpha=0.3)
-    ax3.set_yscale('log')
-    
-    # Plot 4: Backward Pass - Memory Usage
-    ax4 = axes[1, 1]
-    ax4.plot(batch_sizes, results['backward']['classic_memory'], 'o-', 
-             color=classic_color, linewidth=2, markersize=8, label='Classic Attention')
-    ax4.plot(batch_sizes, results['backward']['flash_memory'], 's-', 
-             color=flash_color, linewidth=2, markersize=8, label='Flash Attention')
-    ax4.set_title('Backward Pass - Memory Usage', fontweight='bold')
-    ax4.set_xlabel('Batch Size')
-    ax4.set_ylabel('Memory (GB)')
-    ax4.legend()
-    ax4.grid(True, alpha=0.3)
-    
-    # Adjust layout and save
-    plt.tight_layout()
-    
-    plt.savefig(os.path.join(results_dir, 'swin_transformer_v2_flash_vs_classic.png'), dpi=300, bbox_inches='tight')
-    plt.show()

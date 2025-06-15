@@ -12,7 +12,7 @@ from flash_win_attn_v2 import flash_win_attn_v2_func, win_attention_torch, win_a
 
 
 @triton.testing.perf_report(benchmark_configs)
-def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, metric, provider, dtype=torch.float16, use_logit_scale=True):
+def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, provider, dtype=torch.float16, use_logit_scale=True):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -92,20 +92,17 @@ def bench_attention_comparison(BATCH, W, H, seqlen, HEAD_DIM, mode, metric, prov
     # Run benchmark
     ms = triton.testing.do_bench(fn)
 
-    if metric == "TFLOPS":
-        # Calculate FLOPS
-        total_flops_fwd = calculate_cosine_attention_flops(BATCH, W, H, seqlen, HEAD_DIM)
+    # Calculate FLOPS
+    total_flops_fwd = calculate_cosine_attention_flops(BATCH, W, H, seqlen, HEAD_DIM)
 
-        # Backward pass has roughly 2x the FLOPS of forward pass
-        total_flops = total_flops_fwd * (3 if mode == "bwd" else 1)
+    # Backward pass has roughly 2x the FLOPS of forward pass
+    total_flops = total_flops_fwd * (3 if mode == "bwd" else 1)
 
-        # Calculate TFLOPS
-        tflops = total_flops * 1e-12 / (ms * 1e-3)
+    # Calculate TFLOPS
+    tflops = total_flops * 1e-12 / (ms * 1e-3)
 
-        # Return TFLOPS for plotting
-        return tflops
-    else:
-        return ms
+    # Return TFLOPS for plotting
+    return tflops
 
 
 if __name__ == "__main__":
