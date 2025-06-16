@@ -5,22 +5,14 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     install_requires=[
-        'torch',
-        'triton',
+        'torch>=2.0.0',
+        'triton>=2.0.0',
     ],
-    entry_points={
-        'console_scripts': [
-            # Add command line scripts here
-        ],
-    },
-    author='',
+    author='emiledgl',
     author_email='',
-    description='',
+    description='Triton implementation of Flash Window Attention V2',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='',
-    classifiers=[
-        # to be added
-    ],
-    python_requires='>=3.6',
+    url='https://github.com/emiledgl/flash-window-attention-v2',
+    python_requires='>=3.9',
 )
