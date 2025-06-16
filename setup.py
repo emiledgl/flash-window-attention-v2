@@ -10,7 +10,7 @@ setup(
     ],
     author='emiledgl',
     author_email='',
-    description='Triton implementation of Flash Window Attention ',
+    description='Triton implementation of Flash Window Attention for Swin Transformer V2',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/emiledgl/flash-window-attention-v2',

@@ -55,9 +55,9 @@ These benchmarks clearly demonstrate that Flash Window Attention V2 consistently
 
 ## Requirements
 
-- Python
-- PyTorch
-- Triton
+- Python >= 3.10
+- PyTorch >= 2.6.0
+- Triton >= 3.2.0
 
 ## Usage
 
