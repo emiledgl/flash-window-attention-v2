@@ -43,7 +43,7 @@ The benefits of Flash Window Attention V2 become significantly more apparent whe
 ![Swin Transformer V2 Comparison - Patch 2, Window 16](assets/swin-transformer-v2-comparaison-patch2-window16.png)
 
 * **Forward Pass:** Similar to the previous configuration, FWA-2 shows clear advantages in execution time and memory usage. The absolute times and memory consumptions are higher due to the larger window size, but the relative improvements from Flash Attention remain strong.
-* **Backward Pass:** The memory savings are particularly striking with the larger window size. At batch size 64, Flash Attention's backward pass requires only $15.57$GB of memory, a significant reduction compared to Classic Attention's $32.63$GB. This highlights Flash Attention's capability to unlock training for larger models and batch sizes that would otherwise be memory-prohibitive.
+* **Backward Pass:** The memory savings are particularly striking with the larger window size. At batch size 64, Flash Attention's backward pass requires only 15.57GB of memory, a significant reduction compared to Classic Attention's 32.63GB. This highlights Flash Attention's capability to unlock training for larger models and batch sizes that would otherwise be memory-prohibitive.
 
 These benchmarks clearly demonstrate that Flash Window Attention V2 consistently outperforms the PyTorch implementation across various configurations. For compute-heavy scenarios, such as the patch=2 / window=16 configuration, FWA-2 can yield significant improvements, including **over a 2x improvement in memory efficiency and runtime**. These optimizations are critical for efficiently training and deploying large-scale Swin Transformer V2 models.
 
