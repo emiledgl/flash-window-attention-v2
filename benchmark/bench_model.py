@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import measure_speed_memory, save_results_to_csv, create_plots
+from utils import measure_speed_memory, save_results_to_csv
 from config import swin_transformer_config
 from flash_win_attn_v2 import SwinTransformerV2
 

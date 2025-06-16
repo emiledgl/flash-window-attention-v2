@@ -5,14 +5,14 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     install_requires=[
-        'torch>=2.0.0',
-        'triton>=2.0.0',
+        'torch>=2.6.0',
+        'triton>=3.2.0',
     ],
     author='emiledgl',
     author_email='',
-    description='Triton implementation of Flash Window Attention for Swin transformer V2',
+    description='Triton implementation of Flash Window Attention ',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/emiledgl/flash-window-attention-v2',
-    python_requires='>=3.9',
+    python_requires='>=3.10',
 )
