@@ -1,10 +1,10 @@
 # Flash Window Attention V2: Accelerating Swin Transformer V2 for Faster Inference and Reduced Memory Footprint
 
-**Flash Window Attention V2** is a triton implementation of the scaled cosine attention occuring in the [Swin transformer V2](https://arxiv.org/abs/2111.09883) attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention 2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+**Flash Window Attention V2** is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention 2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
 
 ## Features
 
-The Swin Transformer V2 is a powerful architecture, but its attention mechanism can be a bottleneck in terms of speed and memory, specially with increasing patch size and window size. By leveraging Triton, Flash Window Attention V2 significantly improves performance by:
+The [Swin transformer V2](https://arxiv.org/abs/2111.09883) is a powerful architecture, but its attention mechanism can be a bottleneck in terms of speed and memory, specially with increasing patch size and window size. By leveraging Triton, Flash Window Attention V2 significantly improves performance by:
 
 * **Reducing memory comsuption:** Following the Flash Attention paradigm, we minimize costly reads and writes to global GPU memory, mainly in the backward pass, where the memory usage is reduced by a factor of 2.
 * **Significant Forward and Backward Speedup:** Directly translates to higher throughput for image processing during both training and inference, achieving faster processing for your current models or, alternatively, train and deploy more complex and powerful models while maintaining previous throughput levels.
