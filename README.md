@@ -121,6 +121,7 @@ For optimal performance:
 
 - Supports only FP16 and BF16 dtypes
 - Head dimensions must be <= 128
+- Dropout in the attention matrix computation is not supported yet
 - Autotune introduces race conditions in the backward pass when multiple configurations are given
 - Backward pass doesn't support num_warps > 4
 
