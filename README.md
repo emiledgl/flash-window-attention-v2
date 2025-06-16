@@ -1,8 +1,10 @@
 # Flash Window Attention V2: Accelerating Swin Transformer V2
 
+**Flash Window Attention V2** (FWA-2) is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+
 ![TFlOPS comparaison](assets/tflops_comparison-batch16-window16-head6-d32.png)
 
-**Flash Window Attention V2** (FWA-2) is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+This graph provides a clear comparison of computational throughput (TFLOPS) for different implementations of window attention across varying window sizes, and with the following configuration:  batch_size=16, num_windows=16, num_heads=6 and head_dim=32.
 
 ## Features
 
