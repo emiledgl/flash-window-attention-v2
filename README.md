@@ -31,7 +31,7 @@ Benchmarks comparing this Flash Window Attention V2 implementation against the c
 ### Swin Transformer V2 - Patch Size 4, Window Size 8
 Even in the most classic and tiniest configuration of the Swin Transformer, Flash Window Attention V2 outperforms the standart implementation.
 
-![Swin Transformer V2 Comparison - Patch 4, Window 8](swin-transformer-v2-comparaison-patch4-window8.png)
+![Swin Transformer V2 Comparison - Patch 4, Window 8](assets/swin-transformer-v2-comparaison-patch4-window8.png)
 
 * **Forward Pass:** Flash Window Attention V2 consistently outperforms the classic implementation in terms of speed, with the performance gap widening as the batch size increases. Memory usage is also notably lower, providing efficiency gains.
 * **Backward Pass:** The benefits are even more pronounced in the backward pass. Flash Window Attention V2 delivers minor speedups and significant memory reductions, which are crucial for training large models.
@@ -40,7 +40,7 @@ Even in the most classic and tiniest configuration of the Swin Transformer, Flas
 
 The benefits of Flash Window Attention V2 become significantly more apparent when increasing computational load, as demonstrated by the performance results in this configuration.
 
-![Swin Transformer V2 Comparison - Patch 2, Window 16](swin-transformer-v2-comparaison-patch2-window16.png)
+![Swin Transformer V2 Comparison - Patch 2, Window 16](assets/swin-transformer-v2-comparaison-patch2-window16.png)
 
 * **Forward Pass:** Similar to the previous configuration, Flash Window Attention V2 shows clear advantages in execution time and memory usage. The absolute times and memory consumptions are higher due to the larger window size, but the relative improvements from Flash Attention remain strong.
 * **Backward Pass:** The memory savings are particularly striking with the larger window size. At batch size 64, Flash Attention's backward pass requires only $15.57\text{ GB}$ of memory, a significant reduction compared to Classic Attention's $32.63\text{ GB}$. This highlights Flash Attention's capability to unlock training for larger models and batch sizes that would otherwise be memory-prohibitive.
