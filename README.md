@@ -1,6 +1,6 @@
 # Flash Window Attention V2: Accelerating Swin Transformer V2
 
-**Flash Window Attention V2** (FWA-2) is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+**Flash Window Attention V2** (FWA-2) is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. This implementation applies the principles of the [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), customizing them to address the unique requirements of Scaled Cosine (Window) Attention.
 
 ![TFlOPS comparaison](assets/tflops_comparison-batch16-window16-head6-d32.png)
 
@@ -20,9 +20,9 @@ The reduced memory footprint and the faster inference speed allows for training 
 This repository offers a comprehensive and highly optimized implementation of the **scaled cosine attention mechanism** for Swin Transformer V2, implemented entirely using Triton GPU kernels. Key features include:
 
 * **Q and K Normalization:** Ensures stable training and performance.
-* **Bias & Masking:** Supports various attention bias configurations and orrectly handles attention masks for windowed attention.
+* **Bias & Masking:** Supports bias gradient backpropagation and correctly handles attention masks for windowed attention.
 * **Differentiable Logit Scale:** Addresses the unique scaling factor of Swin Transformer V2 by enabling logit scale backward pass.
-* **Flexible Dimensions:** Our kernels are designed to be highly versatile, working seamlessly with any sequence length (i.e. window size) and any head dimension of at least 16.
+* **Flexible Dimensions:** the kernels are designed to be highly versatile, working seamlessly with any sequence length (i.e. window size) and any head dimension of at least 16.
 * **High Numerical Precision:** The implementation maintains very low error compared to the classic PyTorch window attention, and retains the same error level as what you'd expect from `torch.compile` optimizations.
 * **Mixed Precision Support:** The kernels efficiently operate in both float16 and bfloat16, enabling faster computation and reduced memory usage on compatible hardware.
 
@@ -54,3 +54,9 @@ These benchmarks clearly demonstrate that Flash Window Attention V2 consistently
 - Python
 - PyTorch
 - Triton
+
+## Usage
+
+## Aknowledgments
+
+## Citation
