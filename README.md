@@ -30,9 +30,11 @@ This repository offers a comprehensive and highly optimized implementation of th
 
 ## Performance
 
-Benchmarks comparing this Flash Window Attention V2 implementation against the classic PyTorch window attention for both forward and backward passes have been conducted on a H100 96GB GPU. To ensure consistent comparison with an image size of 256, two configurations are evaluated while maintaining a constant product of Patch Size (P) and Window Size (W) at 32 ($P \times W = 32$). These configurations are: patch=4 / window=8, and patch=2 / window=16. The second configuration inherently involves a four-fold increase in tokens & sequence length per window, making it significantly more compute-intensive. The results demonstrate significant improvements in both execution time and memory efficiency.
+Benchmarks comparing this Flash Window Attention V2 implementation against the classic PyTorch window attention for both forward and backward passes have been conducted on a H100 96GB GPU. To ensure consistent comparison with an image size of 256, two configurations are evaluated while maintaining a constant product of Patch Size (P) and Window Size (W) at 32 ($P \times W = 32$).
 
-### Patch Size = 4 / Window Size = 8
+These configurations are: patch=4 / window=8 and patch=2 / window=16. The second configuration inherently involves a four-fold increase in tokens & sequence length per window while keeping the same total number of windows, making it significantly more compute-intensive. The results demonstrate significant improvements in both runtime and memory efficiency.
+
+### patch_size = 4 / window_size = 8
 Even in the most classic and tiniest configuration of the Swin Transformer, FWA-2 outperforms the standart implementation.
 
 ![Swin Transformer V2 Comparison - Patch 4, Window 8](assets/swin-transformer-v2-comparaison-patch4-window8.png)
@@ -40,7 +42,7 @@ Even in the most classic and tiniest configuration of the Swin Transformer, FWA-
 * **Forward Pass:** FWA-2 consistently outperforms the classic implementation in terms of speed, with the performance gap widening as the batch size increases. Memory usage is also notably lower, providing efficiency gains.
 * **Backward Pass:** The benefits are even more pronounced in the backward pass. FWA-2 delivers minor speedups and significant memory reductions, which are crucial for training large models.
 
-### Patch Size = 2 / Window Size = 16
+### patch_size = 2 / window_size = 16
 
 The benefits of Flash Window Attention V2 become significantly more apparent when increasing computational load, as demonstrated by the performance results in this configuration.
 
