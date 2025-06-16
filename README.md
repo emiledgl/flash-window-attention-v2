@@ -13,9 +13,11 @@ The [Swin transformer V2](https://arxiv.org/abs/2111.09883) is a powerful archit
 - ⚡ **Significant Forward and Backward Speedup:** Directly translates to higher throughput for image processing during both training and inference, achieving faster processing for your current models or, alternatively, train and deploy more complex and powerful models while maintaining previous throughput levels.
 - 📊 **Reducing memory comsuption:** Following the Flash Attention paradigm, costly reads and writes to global GPU memory are minimized, mainly in the backward pass, where the memory usage is reduced by a factor of 2.
 
-The reduced memory footprint and the faster inference speed allows for training and deploying larger models or using bigger batch sizes, pushing the boundaries of what's possible on current hardware. The image below shows how the scaled cosine attention is computed for each input of Q, K, V tensors along side Bias, Mask and logit_scale.
+The reduced memory footprint and the faster inference speed allows for training and deploying larger models or using bigger batch sizes, pushing the boundaries of what's possible on current hardware. The image below shows how the scaled cosine attention is computed for each input of Q, K, V tensors along side Bias, Mask and Scale.
 
-![Scaled Cosine Attention](assets/scaled_cosine_attention.png)
+<div style="text-align: center;">
+    <img src="assets/scaled_cosine_attention.png" alt="Scaled Cosine Attention" width="600"/>
+</div>
 
 This repository offers a comprehensive and highly optimized implementation of the **scaled cosine attention mechanism** for Swin Transformer V2, implemented entirely using Triton GPU kernels. Key features include:
 
@@ -49,14 +51,80 @@ The benefits of Flash Window Attention V2 become significantly more apparent whe
 
 These benchmarks clearly demonstrate that Flash Window Attention V2 consistently outperforms the PyTorch implementation across various configurations. For compute-heavy scenarios, such as the patch=2 / window=16 configuration, FWA-2 can yield significant improvements, including **over a 2x improvement in memory efficiency and runtime**. These optimizations are critical for efficiently training and deploying large-scale Swin Transformer V2 models.
 
-## Usage
-
-### Requirements
+## Requirements
 
 - Python
 - PyTorch
 - Triton
 
+## Usage
+
+Install this package:
+```bash
+pip install -e .
+```
+Use flash window attention v2 function:
+```python
+import torch
+from flash_win_attn_v2 import flash_win_attn_v2_func
+
+dtype = torch.float16
+device = torch.device("cuda")
+
+batch, windows, heads, window_size, head_dim = 8, 4, 6, 8, 32
+
+# Create input tensors
+q = torch.randn(batch * windows, heads, window_size ** 2, head_dim, dtype=dtype, device=device)
+k = torch.randn_like(q)
+v = torch.randn_like(q)
+
+bias = torch.randn(heads, window_size ** 2, window_size ** 2, dtype=dtype, device=device)
+mask = mask = torch.zeros((windows, window_size ** 2, window_size ** 2), dtype=dtype, device=device)
+logit_scale = torch.randn((heads, 1, 1), dtype=dtype, device=device)
+
+# Run flash window attention v2 function
+o = flash_swin_attn_func(q, k, v, logit_scale, bias, mask)
+```
+
+Use the attention module in Swin Transformer V2:
+```python
+import torch
+from flash_win_attn_v2 import WindowAttention
+
+dtype = torch.float16
+device = torch.device("cuda")
+
+batch, window_size, c = 16, 8, 96
+
+# Create input tensor
+x = torch.randn(batch, window ** 2, c, dtype=dtype, device=device)
+
+layer = WindowAttention(
+    dim=c,
+    window_size=(window_size, window_size),
+    num_heads=3,
+    is_flash=True,
+).to(dtype=dtype, device=device)
+
+# Run the full WindowAttention layer
+y = layer(x)
+```
+Set `is_flash=False` to use the classic window attention.
+
+## Notice
+
+For optimal performance:
+- Make data shapes a multiple of 2 (i.e. window_size, head_dimension...)
+- Check the race conditions of your desired configuration before using it with the `benchmark/check.py` script
+
+### Limitations
+
+- Supports only FP16 and BF16 dtypes
+- Head dimensions must be <= 128
+- Autotune introduces race conditions in the backward pass when multiple configurations are given
+- Backward pass doesn't support num_warps > 4
+
 ## Acknowledgments
 
-## Citation
+- @triDao for the original Flash Attention implementation
+- @pengzhangzhi for its contribution by adding the bias backpropagation
