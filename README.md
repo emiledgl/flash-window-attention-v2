@@ -49,14 +49,14 @@ The benefits of Flash Window Attention V2 become significantly more apparent whe
 
 These benchmarks clearly demonstrate that Flash Window Attention V2 consistently outperforms the PyTorch implementation across various configurations. For compute-heavy scenarios, such as the patch=2 / window=16 configuration, FWA-2 can yield significant improvements, including **over a 2x improvement in memory efficiency and runtime**. These optimizations are critical for efficiently training and deploying large-scale Swin Transformer V2 models.
 
-## Requirements
+## Usage
+
+### Requirements
 
 - Python
 - PyTorch
 - Triton
 
-## Usage
-
-## Aknowledgments
+## Acknowledgments
 
 ## Citation
