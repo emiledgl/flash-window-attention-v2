@@ -15,9 +15,9 @@ The [Swin transformer V2](https://arxiv.org/abs/2111.09883) is a powerful archit
 
 The reduced memory footprint and the faster inference speed allows for training and deploying larger models or using bigger batch sizes, pushing the boundaries of what's possible on current hardware. The image below shows how the scaled cosine attention is computed for each input of Q, K, V tensors along side Bias, Mask and Scale.
 
-<div style="text-align: center;">
+<p align="center">
     <img src="assets/scaled_cosine_attention.png" alt="Scaled Cosine Attention" width="600"/>
-</div>
+</p>
 
 This repository offers a comprehensive and highly optimized implementation of the **scaled cosine attention mechanism** for Swin Transformer V2, implemented entirely using Triton GPU kernels. Key features include:
 
