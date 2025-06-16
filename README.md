@@ -1,6 +1,8 @@
 # Flash Window Attention V2: Accelerating Swin Transformer V2
 
-**Flash Window Attention V2** is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention 2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+**Flash Window Attention V2** is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
+
+![Scaled Cosine Attention](assets/scaled_cosine_attention.png)
 
 ## Features
 
