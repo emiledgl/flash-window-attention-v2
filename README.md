@@ -1,5 +1,7 @@
 # Flash Window Attention V2: Accelerating Swin Transformer V2
 
+![TFlOPS comparaison](assets/tflops_comparison-batch16-window16-head6-d32.png)
+
 **Flash Window Attention V2** is a triton implementation of the scaled cosine attention occuring in the Swin transformer V2 attention mechanism. his implementation builds upon the principles introduced in the original [Flash Attention-2 paper](https://arxiv.org/abs/2307.08691), specifically adapting them for the unique requirements of Scaled Cosine (Window) Attention.
 
 ![Scaled Cosine Attention](assets/scaled_cosine_attention.png)
@@ -18,17 +20,14 @@ This repository offers a comprehensive and highly optimized implementation of th
 * **Q and K Normalization:** Ensures stable training and performance.
 * **Bias & Masking:** Supports various attention bias configurations and orrectly handles attention masks for windowed attention.
 * **Differentiable Logit Scale:** Addresses the unique scaling factor of Swin Transformer V2 by enabling logit scale backward pass.
-* **Flexible Dimensions:** Our kernels are designed to be highly versatile, working seamlessly with:
-    * **Any Sequence Length (Window Size):** Adaptable to different window configurations.
-    * **Any Head Dimension (superior to 16):** Supports a wide range of model architectures.
+* **Flexible Dimensions:** Our kernels are designed to be highly versatile, working seamlessly with any sequence length (i.e. window size) and any head dimension of at least 16.
 * **High Numerical Precision:** The implementation maintains very low error compared to the classic PyTorch window attention, and retains the same error level as what you'd expect from `torch.compile` optimizations.
 * **Mixed Precision Support:** The kernels efficiently operate in both float16 and bfloat16, enabling faster computation and reduced memory usage on compatible hardware.
+
+## Performance
 
 ## Requirements
 
 - Python
 - PyTorch
 - Triton
-
-## Performance
-
