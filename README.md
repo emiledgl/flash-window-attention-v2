@@ -73,7 +73,7 @@ from flash_win_attn_v2 import flash_win_attn_v2_func
 dtype = torch.float16
 device = torch.device("cuda")
 
-batch, windows, heads, window_size, head_dim = 8, 4, 6, 8, 32
+batch, windows, heads, window_size, head_dim = 8, 4, 3, 8, 32
 
 # Create input tensors
 q = torch.randn(batch * windows, heads, window_size ** 2, head_dim, dtype=dtype, device=device)
@@ -96,10 +96,10 @@ from flash_win_attn_v2 import WindowAttention
 dtype = torch.float16
 device = torch.device("cuda")
 
-batch, window_size, c = 16, 8, 96
+batch, windows, window_size, c = 8, 4, 8, 96
 
 # Create input tensor
-x = torch.randn(batch, window ** 2, c, dtype=dtype, device=device)
+x = torch.randn(batch * windows, window ** 2, c, dtype=dtype, device=device)
 
 layer = WindowAttention(
     dim=c,
