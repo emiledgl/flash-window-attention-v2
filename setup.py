@@ -9,7 +9,7 @@ setup(
         'triton>=3.2.0',
     ],
     author='emiledgl',
-    author_email='',
+    author_email='dugelayemile@gmail.com',
     description='Triton implementation of Flash Window Attention for Swin Transformer V2',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
