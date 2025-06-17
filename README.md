@@ -61,10 +61,17 @@ These benchmarks clearly demonstrate that Flash Window Attention V2 consistently
 
 ## Usage
 
-Install this package:
+### Quick Installation
+
+Install this package from source:
 ```bash
+git clone https://github.com/emiledgl/flash-window-attention-v2.git
+cd flash_win_attn_v2
 pip install -e .
 ```
+
+### Quick Start
+
 Use flash window attention v2 function:
 ```python
 import torch
