@@ -4,7 +4,7 @@
 
 ![TFlOPS comparaison](assets/tflops_comparison-batch16-window16-head6-d32.png)
 
-This graph provides a clear comparison of computational throughput (TFLOPS) for different implementations of window attention across varying window sizes, and with the following configuration:  batch_size=16, num_windows=16, num_heads=6 and head_dim=32.
+This graph provides a clear comparison of computational throughput (TFLOPS) for different implementations of window attention across varying window sizes (i.e. sequence lengths), and with the following configuration:  batch_size=16, num_windows=16, num_heads=6 and head_dim=32.
 
 ## Features
 
