@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch", type=int, default=16, help="Batch size")
     parser.add_argument("--nwindows", type=int, default=16, help="Number of windows")
     parser.add_argument("--nheads", type=int, default=6, help="Number of attention heads")
-    parser.add_argument("--seqlen", type=int, default=64, help="Sequence length")
+    parser.add_argument("--seqlen", type=int, default=64, help="Sequence length (window size squarred)")
     parser.add_argument("--d", type=int, default=32, help="Dimension of attention features")
     parser.add_argument("--no_logit_scale", action="store_false", dest="use_logit_scale",
                         help="Disable the use of logit scale")
