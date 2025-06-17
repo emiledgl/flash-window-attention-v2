@@ -124,7 +124,10 @@ Set `is_flash=False` to use the classic window attention.
 
 For optimal performance:
 - Make data shapes a multiple of 2 (i.e. window_size, head_dimension...)
-- Check the race conditions of your desired configuration before using it with the `benchmark/check.py` script
+- Check the race conditions of your desired configuration before using it with the `benchmark/check.py` script:
+```bash
+python benchmark/check.py --batch 16 --nwindows 16 --nheads 8 --seqlen 256 --d 64
+```
 
 ### Limitations
 

@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+import argparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -17,7 +18,6 @@ def test_attention_correctness(
     dtype: type = torch.float16,
 ):
 
-    #torch.manual_seed(0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize input tensors
@@ -112,10 +112,31 @@ def test_attention_correctness(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test FWA-2 correctness with customizable parameters.")
+    parser.add_argument("--batch", type=int, default=16, help="Batch size")
+    parser.add_argument("--nwindows", type=int, default=16, help="Number of windows")
+    parser.add_argument("--nheads", type=int, default=6, help="Number of attention heads")
+    parser.add_argument("--seqlen", type=int, default=64, help="Sequence length")
+    parser.add_argument("--d", type=int, default=32, help="Dimension of attention features")
+    parser.add_argument("--no_logit_scale", action="store_false", dest="use_logit_scale",
+                        help="Disable the use of logit scale")
+    parser.add_argument("--dtype", type=str, default="float16", choices=["float16", "bfloat16"],
+                        help="Data type for tensors (float16 or bfloat16)")
 
-    # Fix config
-    batch, nwindows, nheads, seqlen, d = 16, 16, 6, 64, 32
+    args = parser.parse_args()
+
+    # Map string dtype to torch dtype
+    dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16}
+    selected_dtype = dtype_map[args.dtype]
 
     print("Running correctness tests...")
     print("-" * 50)
-    test_attention_correctness(batch, nwindows, nheads, seqlen, d, dtype=torch.float16)
+    test_attention_correctness(
+        batch=args.batch,
+        nwindows=args.nwindows,
+        nheads=args.nheads,
+        seqlen=args.seqlen,
+        d=args.d,
+        use_logit_scale=args.use_logit_scale,
+        dtype=selected_dtype,
+    )
