@@ -12,17 +12,17 @@ from flash_win_attn_v2 import SwinTransformerV2
 
 
 @torch.inference_mode
-def forward(batch, config, dtype=torch.float16):
-    x = torch.randn(batch, config["in_chans"], config["img_size"], config["img_size"], dtype=dtype).cuda()
+def forward(batch_size: int, config: dict, dtype=torch.float16):
+    x = torch.randn(batch_size, config["in_chans"], config["img_size"], config["img_size"], dtype=dtype).cuda()
     m = SwinTransformerV2(**config).to(dtype=dtype, device='cuda')
     t, memory = measure_speed_memory(m.forward, x)
 
     return t, memory
 
 
-def backward(batch, config, dtype=torch.float16):
-    x = torch.randn(batch, config["in_chans"], config["img_size"], config["img_size"], dtype=dtype).cuda()
-    y = torch.randint(0, 1000, size=(batch,)).cuda()
+def backward(batch_size: int, config: dict, dtype=torch.float16):
+    x = torch.randn(batch_size, config["in_chans"], config["img_size"], config["img_size"], dtype=dtype).cuda()
+    y = torch.randint(0, 1000, size=(batch_size,)).cuda()
     m = SwinTransformerV2(**config).to(dtype=dtype, device='cuda')
     opt = torch.optim.Adam(m.parameters(), lr=1e-4)
         

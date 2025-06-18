@@ -12,7 +12,7 @@ def win_attention_torch(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     k: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     v: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
-    logit_scale: torch.Tensor = None,
+    logit_scale: torch.Tensor = None, # (h, 1, 1)
     bias: torch.Tensor = None, # (h, seq, seq)
     mask: torch.Tensor = None, # (windows, seq, seq)
     ) -> torch.Tensor:
@@ -44,7 +44,7 @@ def win_attention_torch_compile(
     q: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     k: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
     v: torch.Tensor, # (batch_size * windows, h, seq, head_dim)
-    logit_scale: torch.Tensor = None,
+    logit_scale: torch.Tensor = None, # (h, 1, 1)
     bias: torch.Tensor = None, # (h, seq, seq)
     mask: torch.Tensor = None, # (windows, seq, seq)
     ) -> torch.Tensor:

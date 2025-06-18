@@ -1,7 +1,7 @@
 import triton
 
 # Benchmarking configuration
-BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 16, 16, 6, 32  # Aligned with test_attention_correctness
+BATCH, N_WINDOWS, N_HEADS, HEAD_DIM = 16, 16, 6, 32  # Aligned with checking
 
 benchmark_configs = [
     triton.testing.Benchmark(
